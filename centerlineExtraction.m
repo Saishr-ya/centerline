@@ -2,6 +2,8 @@
 % GEOMETRIC CENTERLINE EXTRACTION
 % --------------------------------
 
+ptCloud = pcread('balloonclean.ply'); %change to proper file name
+
 ptCloud_locations = ptCloud.Location;
 
 %PCA finds the most important axis 
