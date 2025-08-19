@@ -2,7 +2,7 @@
 % GEOMETRIC CENTERLINE EXTRACTION
 % --------------------------------
 
-ptCloud = pcread('balloonclean.ply'); %change to proper file name
+ptCloud = pcread('balloonclean.ply'); 
 
 ptCloud_locations = ptCloud.Location;
 
@@ -82,5 +82,11 @@ else
     fprintf('No centerline points to plot.\n');
 end
 
+%---Calculate volume of 3D Scan ---
+shape = alphaShape(double(ptCloud_locations));
+V = volume(shape);
+
 hold(h_ax, 'off');
 fprintf('--- Visualization Complete ---\n');
+
+fprintf('Volume calculated by alphaShape: %.4f cubic units\n', V);
