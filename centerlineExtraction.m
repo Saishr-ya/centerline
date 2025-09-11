@@ -2,7 +2,7 @@
 % GEOMETRIC CENTERLINE EXTRACTION
 % --------------------------------
 
-ptCloud = pcread('balloonclean.ply'); 
+ptCloud = pcread('volumefixclean1.ply'); 
 
 ptCloud_locations = ptCloud.Location;
 
@@ -90,3 +90,62 @@ hold(h_ax, 'off');
 fprintf('--- Visualization Complete ---\n');
 
 fprintf('Volume calculated by alphaShape: %.4f cubic units\n', V);
+
+vol_in3 = V / 16387.064;
+
+vol_actual = 300; 
+
+accuracy_threshold = 85; % The desired accuracy threshold to stop at
+
+initial_measured_volume = vol_in3;
+
+initial_points = ptCloud.Count;
+
+error_percentage = (abs(initial_measured_volume - vol_actual) / vol_actual) * 100;
+initial_accuracy = 100 - error_percentage;
+
+fprintf('Starting with an initial accuracy of %.2f%% from a measured volume of %.4f in^3.\n\n', ...
+    initial_accuracy, initial_measured_volume);
+
+% Initialize loop variables
+accuracy = initial_accuracy; % Start the loop with the initial accuracy
+iteration = 0;
+removal_percentage = 0.05; % Remove 5% of points in each iteration
+
+while accuracy >= accuracy_threshold
+    iteration = iteration + 1;
+    current_num_points = size(ptCloud_locations, 1);
+    
+    % Randomly remove a percentage of points
+    num_to_remove = round(current_num_points * removal_percentage);
+    if current_num_points - num_to_remove < 100
+        fprintf('Warning: Too few points remaining. Breaking loop.\n');
+        break;
+    end
+    
+    % Get indices to keep (remove the rest)
+    indices_to_keep = randperm(current_num_points, current_num_points - num_to_remove);
+    ptCloud_locations = ptCloud_locations(indices_to_keep, :);
+    
+    % --- Calculate volume of the current point cloud ---
+    shape = alphaShape(double(ptCloud_locations));
+    V = volume(shape);
+    vol_in3 = V / 16387.064;
+    
+    % --- Calculate and display accuracy ---
+    error_percentage = (abs(vol_in3 - vol_actual) / vol_actual) * 100;
+    accuracy = 100 - error_percentage;
+    
+    fprintf('Iteration %d: Points = %d, Volume = %.4f in^3, Accuracy = %.2f%%\n', ...
+        iteration, size(ptCloud_locations, 1), vol_in3, accuracy);
+end
+
+% --- Final Output ---
+fprintf('\n--- Iteration Complete ---\n');
+points_removed = initial_points - size(ptCloud_locations, 1);
+
+fprintf('Process stopped because accuracy dropped below %.2f%%.\n', accuracy_threshold);
+fprintf('Final Volume Calculated: %.4f in^3\n', vol_in3);
+fprintf('Final Accuracy: %.2f%%\n', accuracy);
+fprintf('Total points remaining: %d\n', size(ptCloud_locations, 1));
+fprintf('Total pixels (points) removed: %d\n', points_removed);
